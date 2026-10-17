@@ -6,6 +6,8 @@ const authMiddleware = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
 const crypto = require("crypto");
 const razorpay = require("../config/razorpay");
+const imagekit = require("../config/imagekit");
+const fs = require("fs/promises");
 
 // Book a locker
 router.post("/", authMiddleware, upload.single("idImage"), async (req, res) => {
@@ -115,7 +117,35 @@ router.post("/", authMiddleware, upload.single("idImage"), async (req, res) => {
         const startTime = new Date();
         const endTime = new Date(startTime.getTime() + durationHours * 60 * 60 * 1000);
 
-        const idImagePath = req.file ? req.file.path : null;
+        // const idImagePath = req.file ? req.file.path : null;
+
+        // let idImagePath = null;
+
+        // if (req.file) {
+        //   const uploadedImage = await imagekit.upload({
+        //     file: req.file.path,
+        //     fileName: req.file.filename,
+        //     folder: "/nestlocker/id-proofs",
+        //   });
+
+        //   idImagePath = uploadedImage.url;
+        // }
+        let idImagePath = null;
+
+        if (req.file) {
+          try {
+            const uploadedImage = await imagekit.upload({
+              file: req.file.path,
+              fileName: req.file.filename,
+              folder: "/nestlocker/id-proofs",
+            });
+
+            idImagePath = uploadedImage.url;
+          } finally {
+            await fs.unlink(req.file.path).catch(() => {});
+          }
+        }
+
 
         // Create booking
         const booking = new Booking({
