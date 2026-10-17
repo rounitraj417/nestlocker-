@@ -130,18 +130,40 @@ router.post("/", authMiddleware, upload.single("idImage"), async (req, res) => {
 
         //   idImagePath = uploadedImage.url;
         // }
+        // let idImagePath = null;
+
+        // if (req.file) {
+        //   try {
+        //     const uploadedImage = await imagekit.upload({
+        //       file: req.file.path,
+        //       fileName: req.file.filename,
+        //       folder: "/nestlocker/id-proofs",
+        //     });
+
+        //     idImagePath = uploadedImage.url;
+        //   } finally {
+        //     await fs.unlink(req.file.path).catch(() => {});
+        //   }
+        // }
         let idImagePath = null;
 
         if (req.file) {
           try {
+            // Read the actual image data
+            const fileBuffer = await fs.readFile(req.file.path);
+
+            // Upload actual image bytes to ImageKit
             const uploadedImage = await imagekit.upload({
-              file: req.file.path,
+              file: fileBuffer,
               fileName: req.file.filename,
               folder: "/nestlocker/id-proofs",
             });
 
             idImagePath = uploadedImage.url;
+
+            console.log("Image uploaded:", uploadedImage.url);
           } finally {
+            // Delete temporary local file
             await fs.unlink(req.file.path).catch(() => {});
           }
         }
